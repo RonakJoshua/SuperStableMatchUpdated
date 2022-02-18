@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Super Stable Matching</title>
+    <style>
+        .center {
+          margin: 15px;
+          top: 100px;
+          left: 50%;
+          -ms-transform: translate(-50%, -50%);
+          transform: translate(-50%, -50%);
+        }
+
+        body {
+          margin: 0;
+          overflow-x: hidden;
+        }
+
+        h1 {
+            font-family: 'Helvetica Light', Helvetica, sans-serif;
+            font-size: 40px;
+            font-weight: 150;
+            color: black;
+            padding-left: 20px;
+        }
+
+        p {
+            font-family: 'Helvetica Light', Helvetica, sans-serif;
+            font-size: 20px;
+            font-weight: 150;
+            color: black;
+            /*padding-left: 20px;*/
+        }
+
+        a {
+            padding: 7px 30px;
+            background: #16bb91;
+            color: white;
+            border: none;
+            border-radius: 100px;
+            cursor: pointer;
+            font-family: 'Helvetica Light', Helvetica, sans-serif;
+            font-weight: 200;
+            font-size: 20px;
+        }
+
+        .leftpane {
+            width: 70%;
+            height: 100%;
+            float: left;
+            /*background-color: rosybrown;*/
+            border-collapse: collapse;
+        }
+
+        .middlepane {
+            width: 30%;
+            height: 100%;
+            float: left;
+            border-left-color: #243137;
+            border-left-width: 5px;
+            /*background-color: royalblue;*/
+            border-collapse: collapse;
+        }
+
+        .rightpane {
+            width: 40%;
+            height: 100%;
+            float: left;
+            border-left-color: #243137;
+            border-left-width: 5px;
+            /*background-color: royalblue;*/
+            border-collapse: collapse;
+        }
+
+        .tooltip {
+            font-family: 'Helvetica Light', Helvetica, sans-serif;
+            font-weight: 200;
+            font-size: 20px;
+            position: relative;
+            display: inline-block;
+            /*border-bottom: 1px dotted black;*/
+        }
+
+        .tooltip .tooltiptext {
+          visibility: hidden;
+          width: 400px;
+          background-color: black;
+          color: #fff;
+          text-align: left;
+          border-radius: 6px;
+          padding: 5px 0;
+
+          /* Position the tooltip */
+          position: absolute;
+          z-index: 1;
+        }
+
+        .tooltip:hover .tooltiptext {
+          visibility: visible;
+        }
+
+        canvas {
+          background: white;
+        }
+
+        svg {
+            width: 100%;
+            height: {{ 80+(n*80) }}px;
+            background: white;
+        }
+
+        text {
+            font-family: 'Helvetica Light', Helvetica, sans-serif;
+            font-weight: 200;
+        }
+
+        circle.btn {
+            stroke:#fff;
+            fill:#fff;
+            fill-opacity:0;
+            cursor:pointer;
+            stroke-opacity:0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Super Stable Matching Algorithm</h1>
+    <div class="leftpane">
+        <div style="top: 50px; margin: 15px;">
+            <a type="button" href="{{ url_for('hello_world') }}" style="text-decoration:none;">
+                Generate Random Input and Run
+            </a>
+        </div>
+        <div style="top: 50px; margin: 30px;">
+            {% if data is none %}
+                <p>None (no matches found)</p>
+            {% else %}
+                <p>Pairings (man, woman). Use mouse-over to see preferences, or click the vertices in the bipartite graph:</p>
+                {% for male in data.maleSet %}
+                    <p>
+                        <div class="tooltip" style="display: inline">(m{{ male.index + 1 }}
+                            <span class="tooltiptext">{{ male.originalPreferenceText }}</span>
+                        </div>,
+                        <div class="tooltip" style="display: inline">w{{ male.engagedWith[0] + 1 }})
+                            <span class="tooltiptext">{{ data.findWoman(male.engagedWith[0]).originalPreferenceText }}</span>
+                        </div>
+                    </p>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    <div class="middlepane" onload="draw()">
+        <!--<canvas>
+            <text x="32" y="50" fill="red">Love</text>
+        </canvas>-->
+        <svg>
+            {% if matches|length != 0 %}
+                {% for i in range(n) %}
+                    <line x1="50" y1="{{ 40+(matches[i][0])*80 }}" x2="300" y2="{{ 40+(matches[i][1])*80 }}" style="stroke:rgb(0,0,0);stroke-width:3" ></line>
+                {% endfor %}
+            {% endif %}
+            {% for i in range(n) %}
+                <circle cx="50" cy="{{ 40+(i*80) }}" r="20" stroke="white" stroke-width="0" fill="#4a99e0" ></circle>
+                <circle cx="300" cy="{{ 40+(i*80) }}" r="20" stroke="white" stroke-width="0" fill="#e06bad" ></circle>
+                {% if i < 9 %}
+                    <text x="40" y="{{ 46+(i*80) }}" fill="white">m{{ i+1 }}</text>
+                    <text x="290" y="{{ 46+(i*80) }}" fill="white">w{{ i+1 }}</text>
+                {% else %}
+                    <text x="35" y="{{ 46+(i*80) }}" fill="white">m{{ i+1 }}</text>
+                    <text x="285" y="{{ 46+(i*80) }}" fill="white">w{{ i+1 }}</text>
+                {% endif %}
+                <circle cx="50" cy="{{ 40+(i*80) }}" r="20" stroke="white" stroke-width="0" fill="#00000000" ></circle>
+                <circle cx="3000" cy="{{ 40+(i*80) }}" r="20" stroke="white" stroke-width="0" fill="#00000000" ></circle>
+            {% endfor %}
+            {% if matches|length != 0 %}
+                {% for male in data.maleSet %}
+                    <circle class="btn" cx="50" cy="{{ 40+(male.index*80) }}" r="20" onclick='alert({{ male.originalPreferenceText|tojson }})'></circle>
+                    <circle class="btn" cx="300" cy="{{ 40+(male.index*80) }}" r="20" onclick='alert({{ data.findWoman(male.engagedWith[0]).originalPreferenceText|tojson }})'></circle>
+                {% endfor %}
+            {% endif %}
+        </svg>
+    </div>
+    <!--<div class="rightpane">
+        {% if data is none %}
+            <p>None (no matches found)</p>
+        {% else %}
+            <p>Pairings (man, woman). Use mouse-over to see preferences:</p>
+            {% for male in data.maleSet %}
+                <p>
+                    <div class="tooltip" style="display: inline">(m{{ male.index + 1 }}
+                        <span class="tooltiptext">{{ male.originalPreferenceText }}</span>
+                    </div>,
+                    <div class="tooltip" style="display: inline">w{{ male.engagedWith[0] + 1 }})
+                        <span class="tooltiptext">{{ data.findWoman(male.engagedWith[0]).originalPreferenceText }}</span>
+                    </div>
+                </p>
+            {% endfor %}
+        {% endif %}
+    </div>-->
+</body>
+
+<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>-->
+
+<script>
+
+
+    /*const cvs = document.querySelector('canvas');
+    const c = cvs.getContext('2d');
+    let yval = 50
+    let match = []
+    //for (let i = 0; i < myFunc({{n|tojson}}); i++) {
+    //    match.push({{ matches[i]|safe }})
+    //}
+    console.log({{ matches|safe }})
+
+    cvs.style.width ='100%';
+
+    cvs.width = cvs.offsetWidth;
+    cvs.height = window.innerHeight;*/
+
+    //window.addEventListener('resize', function () {
+    //  cvs.width = window.innerWidth;
+    //  cvs.height = window.innerHeight;
+    //});
+
+    function alertFunc(pref) {
+        console.log(pref)
+        alert(pref);
+}
+
+    /*function myFunc(vars) {
+        let n = vars
+        return vars
+    }
+
+    function draw() {
+
+        if (!cvs.getContext) {
+            return;
+        }
+
+        // set line stroke and line width
+        c.strokeStyle = 'black';
+        c.fillStyle = 'black';
+        c.lineWidth = 5;
+
+        if ({{ matches|safe }}.length !== 0) {
+
+            for (let i = 0; i < myFunc({{n|tojson}}); i++) {
+                c.beginPath();
+                c.moveTo(50,40+(({{ matches|safe }}[i][0])*80));
+                c.lineTo(300,40+(({{ matches|safe }}[i][1])*80));
+                c.stroke();
+                c.closePath();
+            }
+        }
+
+        for (let i = 0; i < myFunc({{n|tojson}}); i++) {
+            c.fillStyle = '#4a99e0';
+            c.beginPath();
+            c.arc(50, 40+(i*80), 20, 0, 2*Math.PI)
+            c.fill();
+            c.fillStyle = 'white';
+            c.font = '12pt Helvetica';
+            c.fillText("m"+(i+1), 40, 45+(i*80))
+            c.closePath();
+
+            c.beginPath();
+            c.fillStyle = '#e06bad';
+            c.arc(300, 40+(i*80), 20, 0, 2*Math.PI)
+            c.fill();
+            c.fillStyle = 'white';
+            c.font = '12pt Helvetica';
+            c.fillText("w"+(i+1), 290, 45+(i*80))
+            c.closePath();
+        }
+
+    }
+    draw();*/
+</script>
+</html>
